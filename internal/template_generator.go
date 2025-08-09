@@ -83,6 +83,7 @@ func findPkgPath(dirPath string) (string, error) {
 
 type TemplateGenerator struct {
 	formatter           Formatter
+	formatterOptions    map[string]any
 	inPackage           bool
 	requireSchemaExists bool
 	registry            *template.Registry
@@ -102,6 +103,7 @@ func NewTemplateGenerator(
 	requireSchemaExists bool,
 	remoteTemplateCache map[string]*RemoteTemplate,
 	formatter Formatter,
+	formatterOptions map[string]any,
 	pkgConfig *config.Config,
 	pkgName string,
 	forceInPackage *bool,
@@ -169,6 +171,7 @@ func NewTemplateGenerator(
 		requireSchemaExists: requireSchemaExists,
 		registry:            reg,
 		formatter:           formatter,
+		formatterOptions:    formatterOptions,
 		inPackage:           inPackage,
 		pkgConfig:           pkgConfig,
 		pkgName:             pkgName,
@@ -179,7 +182,7 @@ func NewTemplateGenerator(
 func (g *TemplateGenerator) format(src []byte) ([]byte, error) {
 	switch g.formatter {
 	case FormatGoImports:
-		return goimports(src)
+		return goimports(src, g.formatterOptions)
 	case FormatGofmt:
 		return gofmt(src)
 	case FormatNoop:
@@ -485,7 +488,17 @@ func (g *TemplateGenerator) Generate(
 	return formatted, nil
 }
 
-func goimports(src []byte) ([]byte, error) {
+func goimports(src []byte, options map[string]any) ([]byte, error) {
+	imports.LocalPrefix = ""
+	if v, ok := options["local-prefix"]; ok {
+		s, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("expected string as formatter option local-prefix, got %v", v)
+		}
+
+		imports.LocalPrefix = s
+	}
+
 	formatted, err := imports.Process("/", src, &imports.Options{
 		TabWidth:   8,
 		TabIndent:  true,

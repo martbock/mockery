@@ -347,6 +347,7 @@ func (r *RootApp) Run() error {
 			collection.config.RequireTemplateSchemaExists,
 			remoteTemplateCache,
 			pkg.Formatter(*r.Config.Formatter),
+			r.Config.FormatterOptions,
 			packageConfig.Config,
 			collection.config.OutPkgName,
 			collection.config.InPackage,
