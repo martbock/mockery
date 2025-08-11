@@ -1,7 +1,6 @@
 package internal
 
 import (
-	_ "embed"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -52,6 +51,23 @@ import (
 			wantErr: assert.NoError,
 		},
 		{
+			name: "empty formatter options",
+			args: args{
+				src:     []byte(before),
+				options: map[string]any{},
+			},
+			want: `package foo
+
+import (
+	"fmt"
+
+	"github.com/example/bar"
+	"golang.org/x/text"
+)
+`,
+			wantErr: assert.NoError,
+		},
+		{
 			name: "local prefix configured",
 			args: args{
 				src:     []byte(before),
@@ -80,12 +96,40 @@ import (
 				return assert.ErrorContains(t, err, "42", msgAndArgs...)
 			},
 		},
+		{
+			name: "incomplete func declaration",
+			args: args{
+				src:     []byte("package foo\n func ("),
+				options: map[string]any{"local-prefix": "github.com/example"},
+			},
+			want: "",
+			wantErr: func(t assert.TestingT, err error, msgAndArgs ...any) bool {
+				return assert.ErrorContains(t, err, "goimports", msgAndArgs...)
+			},
+		},
+		{
+			name: "unknown option",
+			args: args{
+				src:     []byte(before),
+				options: map[string]any{"some-option": "foo"},
+			},
+			want: `package foo
+
+import (
+	"fmt"
+
+	"github.com/example/bar"
+	"golang.org/x/text"
+)
+`,
+			wantErr: assert.NoError,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := goimports(tt.args.src, tt.args.options)
 			tt.wantErr(t, err)
-			assert.Equal(t, tt.want, string(got))
+			assert.Equalf(t, tt.want, string(got), "formatted output mismatch for %q", tt.name)
 		})
 	}
 }

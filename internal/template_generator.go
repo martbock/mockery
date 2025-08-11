@@ -493,7 +493,7 @@ func goimports(src []byte, options map[string]any) ([]byte, error) {
 	if v, ok := options["local-prefix"]; ok {
 		s, ok := v.(string)
 		if !ok {
-			return nil, fmt.Errorf("expected string as formatter option local-prefix, got %v", v)
+			return nil, fmt.Errorf("expected local prefix to be string, got %v", v)
 		}
 
 		imports.LocalPrefix = s
@@ -507,7 +507,7 @@ func goimports(src []byte, options map[string]any) ([]byte, error) {
 		FormatOnly: true,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("goimports: %s", err)
+		return nil, fmt.Errorf("goimports: %w", err)
 	}
 
 	return formatted, nil
@@ -516,7 +516,7 @@ func goimports(src []byte, options map[string]any) ([]byte, error) {
 func gofmt(src []byte) ([]byte, error) {
 	formatted, err := format.Source(src)
 	if err != nil {
-		return nil, fmt.Errorf("go/format: %s", err)
+		return nil, fmt.Errorf("go/format: %w", err)
 	}
 
 	return formatted, nil
